@@ -1,4 +1,4 @@
-Glance — third-party asset notices
+Jev Stage — third-party asset notices
 ==================================
 
 The source code in this repository is MIT licensed (see LICENSE). The bundled
@@ -30,14 +30,10 @@ anime_girl.vrm — "おんなのこ１ロング" (girl 1, long hair)
            beta AvatarSample_1-4 under CC0 with an explicit copyright
            waiver. (AvatarSample_A/B/C are NOT CC0 and are not used here.)
 
-polydancer.vrm — "Polydancer"
-  Source:  Polygonal Mind, via 100Avatars Round 1 (Avatar 021)
-           https://www.polygonalmind.com/
-  License: CC0 1.0
-
-rose.vrm — "Rose"
-  Source:  Polygonal Mind, via 100Avatars Round 1 (Avatar 057)
-  License: CC0 1.0
+The public picker and published avatar directory contain exactly three characters:
+CosmicBot, Cyberpal, and the sailor-uniform anime character. Unselected Polydancer
+and Rose files are not shipped. The three Nitral characters listed below were
+already absent from the open-source version and remain excluded.
 
 CC0 imposes no attribution requirement. Credit is given here voluntarily.
 

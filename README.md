@@ -1,5 +1,18 @@
 # Jev Stage
 
+**[Open the GitHub Pages stage →](https://gy19a.github.io/jev-stage/)**
+
+The public build contains exactly **CosmicBot**, **Cyberpal** (the visor character),
+and the **sailor-uniform anime character**, in that order. Avatar switching, idle
+animation and **Preview motion · no AI** work without an API key. Manual previews
+are explicitly labelled and do not invent a decision, confidence, or latency.
+
+**API limitation:** GitHub Pages is static hosting, not an inference backend.
+TypeSafe currently rejects its browser origin at CORS preflight, so typing a message
+requires a key **and** a separately configured trusted proxy; a key alone is not
+enough. No proxy, shared credential, private endpoint or existing deployment is
+connected to this Pages site. See the [CORS caveat](#the-cors-caveat--read-this-before-you-file-an-issue).
+
 **A 3D avatar that reacts in one forward pass — no text generation, no JSON parsing.**
 
 You type a sentence. A structured-decision model classifies it into one of 14 performance
@@ -58,16 +71,17 @@ cd jev-stage
 python3 -m http.server 8080
 ```
 
-Open `http://localhost:8080`, click **set API key**, paste a
-[TypeSafe key](https://console.typesafe.ai/keys), and start typing.
+Open `http://localhost:8080` and choose a character or **Preview motion · no AI**.
+For model-driven reactions, first resolve the CORS limitation below, then click
+**set API key** and provide your own [TypeSafe key](https://console.typesafe.ai/keys).
 
 The key is kept in `localStorage` under `jev-stage.typesafe.key`. It never leaves your
 browser except as an `Authorization` header on the API call.
 
 ### The CORS caveat — read this before you file an issue
 
-`api.typesafe.ai` **rejects browser requests**. Every origin I tried is refused at
-preflight, including `localhost`, `*.github.io`, and TypeSafe's own domains:
+`api.typesafe.ai` **rejects browser requests**. An unauthenticated `OPTIONS` check
+with `Origin: https://gy19a.github.io` returned this on 2026-09-19:
 
 ```
 HTTP 400  Disallowed CORS origin
@@ -77,7 +91,7 @@ This is deliberate on their side, not a bug in this repo. Server-side calls with
 key return 200. So a pure-static page cannot call the API directly, and you need a
 one-hop proxy that adds nothing but a hostname change.
 
-**Nginx** (what the live demo uses):
+**Nginx** (for your own separately managed backend):
 
 ```nginx
 location /ts-api/ {
@@ -111,6 +125,20 @@ export default {
 
 Then point `TS_URL` in `index.html` at your proxy. The proxy adds **no** key — callers
 still bring their own, so it cannot spend your credits.
+
+### GitHub Pages deployment
+
+`.github/workflows/pages.yml` runs the regression checks, builds an allowlisted
+runtime with `python3 scripts/build_pages.py`, and publishes it through GitHub
+Actions. The repository's Pages source must be **GitHub Actions**. Only `index.html`,
+the three selected VRMs, the motion files, license notices and a SHA-256 asset
+manifest are uploaded. The working tree, tests, screenshots, Git config and local
+credentials are never part of the Pages artifact.
+
+```bash
+python3 -m unittest discover -s tests -v
+python3 scripts/build_pages.py  # creates a fresh .pages-build directory
+```
 
 ---
 
@@ -194,9 +222,10 @@ rail, and 16px inputs so iOS does not zoom on focus.
 
 ## Assets and licensing
 
-Every bundled file was checked against its own embedded VRM metadata and its upstream
-source before being included. Files whose license does not clearly permit redistribution
-were **removed from this repo**, not shipped with a hopeful note.
+The three retained avatars carry CC0 in their own embedded VRM metadata. Other
+characters are not part of the current source tree or Pages runtime. The animation
+license caveat below is pre-existing and remains unresolved; avatar clearance must
+not be mistaken for a blanket clearance of every third-party motion file.
 
 ### Avatars — all CC0
 
@@ -205,8 +234,10 @@ were **removed from this repo**, not shipped with a hopeful note.
 | `CosmicBot.vrm` | Cosmic Bot | [ToxSam/open-source-avatars](https://github.com/ToxSam/open-source-avatars) (100Avatars R3) | CC0 1.0, `allowRedistribution: true` |
 | `Cyberpal.vrm` | Cyberpal | [ToxSam/open-source-avatars](https://github.com/ToxSam/open-source-avatars) (100Avatars R3) | CC0 1.0, `allowRedistribution: true` |
 | `anime_girl.vrm` | おんなのこ１ロング | VRoid Studio base model (pixiv) | CC0 1.0 |
-| `polydancer.vrm` | Polydancer | [Polygonal Mind](https://www.polygonalmind.com/) via 100Avatars R1 | CC0 1.0 |
-| `rose.vrm` | Rose | [Polygonal Mind](https://www.polygonalmind.com/) via 100Avatars R1 | CC0 1.0 |
+
+The unused `polydancer.vrm` and `rose.vrm` resources have also been removed so that
+the file inventory matches the three-character picker. They were not the three
+Nitral characters discussed below; those were already excluded before this update.
 
 Provenance was confirmed by SHA-256 comparison against each upstream download URL, not
 inferred from filenames — several had been renamed in transit.

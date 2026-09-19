@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
 <title>Jev Stage — decisions you can watch</title>
 <script type="importmap">{"imports":{
 "three":"https://unpkg.com/three@0.169.0/build/three.module.js",
@@ -24,7 +25,7 @@ canvas{display:block;width:100%;height:100%}
 .brand{font-size:16px;font-weight:650;letter-spacing:-.2px}
 .tag{font-size:12px;color:#8b98ab;margin-top:2px;max-width:520px}
 .hud{text-align:right;font:11.5px ui-monospace,monospace;color:#8b98ab;
-     pointer-events:none;flex:0 0 auto;max-width:44%}
+     pointer-events:none;flex:0 0 auto;max-width:44%;padding-top:14px}
 .hud b{color:#e8eef7}
 .hud .emo{font-size:20px;font-weight:650;letter-spacing:-.4px;color:#7cc4ff;
           font-family:ui-sans-serif,sans-serif;display:block;margin-bottom:2px}
@@ -46,7 +47,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
       backdrop-filter:blur(8px)}
 .chip:hover{border-color:#3b82f6;color:#e8eef7}
 .ctl{position:absolute;bottom:24px;left:26px;display:flex;flex-direction:column;gap:8px;
-     z-index:5;pointer-events:auto}
+     z-index:5;pointer-events:auto;max-width:225px}
 .bottom .ctl{position:absolute;bottom:24px;left:26px}
 select{background:#0c1018e6;color:#e8eef7;border:1px solid #1e2836;border-radius:9px;
        padding:8px 11px;font-size:12px;backdrop-filter:blur(8px)}
@@ -63,6 +64,12 @@ select{background:#0c1018e6;color:#e8eef7;border:1px solid #1e2836;border-radius
      backdrop-filter:blur(10px);opacity:0;transition:opacity .35s}
 .say.on{opacity:1}
 .say b{color:#7cc4ff}
+@media(min-width:761px) and (max-width:1260px){
+  .bottom .ctl{position:static;flex-direction:row;max-width:720px;margin:0 auto 10px}
+  .ctl select{flex:1;min-width:0}
+  .say{position:static;transform:none;max-width:720px;margin:0 auto 10px;display:none}
+  .say.on{display:block}
+}
 @media(max-width:760px){
   /* Beat the desktop `.bottom .ctl` absolute rule with equal specificity. */
   .bottom .ctl{position:static;bottom:auto;left:auto}
@@ -138,11 +145,12 @@ select{background:#0c1018e6;color:#e8eef7;border:1px solid #1e2836;border-radius
   <div class="bottom">
     <div class="say" id="say"></div>
     <div class="ctl">
-      <select id="avatar"></select>
-      <select id="model"></select>
+      <select id="avatar" aria-label="Character"></select>
+      <select id="model" aria-label="Decision model"></select>
+      <select id="motionPreview" aria-label="Preview motion (no AI)"></select>
     </div>
     <div class="row">
-      <input id="inp" maxlength="__MAXSAY__" placeholder="Say something to her…" autocomplete="off">
+      <input id="inp" maxlength="240" placeholder="Say something to the character…" autocomplete="off" aria-label="Message">
       <button id="go">Send</button>
     </div>
     <div class="chips" id="chips"></div>
@@ -154,7 +162,7 @@ select{background:#0c1018e6;color:#e8eef7;border:1px solid #1e2836;border-radius
     </div>
   </div>
 </div>
-<script>window.STAGE_META = {"avatars": [{"id": "sailor", "label": "Sailor girl", "file": "anime_girl.vrm", "note": "VRoid · school uniform", "license": "CC0 · commercial OK"}, {"id": "cosmicbot", "label": "CosmicBot", "file": "CosmicBot.vrm", "note": "robot · low-poly", "license": "CC0 · commercial OK"}, {"id": "cyberpal", "label": "Cyberpal", "file": "Cyberpal.vrm", "note": "robot · visor", "license": "CC0 · commercial OK"}], "motions": [{"id": "Angry", "label": "Angry", "loop": false}, {"id": "Blush", "label": "Blush", "loop": false}, {"id": "Clapping", "label": "Clapping", "loop": false}, {"id": "Goodbye", "label": "Goodbye", "loop": false}, {"id": "Jump", "label": "Jump", "loop": false}, {"id": "LookAround", "label": "Look around", "loop": true}, {"id": "Relax", "label": "Relax", "loop": true}, {"id": "Sad", "label": "Downcast", "loop": false}, {"id": "Sleepy", "label": "Sleepy", "loop": true}, {"id": "Surprised", "label": "Surprised", "loop": false}, {"id": "Thinking", "label": "Thinking", "loop": true}], "emotions": ["excited", "happy", "greeting", "friendly", "proud", "shy", "calm", "playful", "farewell", "thinking", "sad", "angry", "surprised", "curious"], "idle": ["LookAround", "Thinking", "Relax"], "byEmotion": {"excited": {"id": "Jump", "label": "Jump", "emotion": "excited", "when": "celebration, hype, invitations to play, dancing", "loop": false}, "happy": {"id": "Clapping", "label": "Clapping", "emotion": "happy", "when": "praise, good news, gratitude, affection", "loop": false}, "greeting": {"id": "Clapping", "label": "Clapping", "emotion": "greeting", "when": "hello, introductions, someone arriving", "loop": false}, "friendly": {"id": "Clapping", "label": "Clapping", "emotion": "friendly", "when": "casual small talk, acknowledgement", "loop": false}, "proud": {"id": "Blush", "label": "Blush", "emotion": "proud", "when": "showing off, confidence, compliments about looks", "loop": false}, "shy": {"id": "Blush", "label": "Blush", "emotion": "shy", "when": "flirting, embarrassment, being admired", "loop": false}, "calm": {"id": "Relax", "label": "Relax", "emotion": "calm", "when": "neutral statements, nothing emotive", "loop": true}, "playful": {"id": "Jump", "label": "Jump", "emotion": "playful", "when": "teasing, jokes, banter", "loop": false}, "farewell": {"id": "Goodbye", "label": "Goodbye", "emotion": "farewell", "when": "leaving, saying bye, ending the conversation", "loop": false}, "thinking": {"id": "Thinking", "label": "Thinking", "emotion": "thinking", "when": "questions, problems, anything asking for reasoning", "loop": true}, "sad": {"id": "Sad", "label": "Downcast", "emotion": "sad", "when": "loss, bad news, disappointment", "loop": false}, "angry": {"id": "Angry", "label": "Angry", "emotion": "angry", "when": "insults, hostility, frustration", "loop": false}, "surprised": {"id": "Surprised", "label": "Surprised", "emotion": "surprised", "when": "shock, disbelief, sudden news", "loop": false}, "curious": {"id": "LookAround", "label": "Look around", "emotion": "curious", "when": "wondering aloud, mild interest", "loop": true}}, "maxSay": 240, "models": [{"id": "jev-latest", "label": "jev-latest"}, {"id": "jev-preview", "label": "jev-preview"}]};</script>
+<script>window.STAGE_META = {"avatars": [{"id": "cosmicbot", "label": "CosmicBot", "file": "CosmicBot.vrm", "note": "robot · low-poly", "license": "CC0 · commercial OK"}, {"id": "cyberpal", "label": "Cyberpal", "file": "Cyberpal.vrm", "note": "robot · visor", "license": "CC0 · commercial OK"}, {"id": "sailor", "label": "Sailor girl", "file": "anime_girl.vrm", "note": "VRoid · school uniform", "license": "CC0 · commercial OK"}], "motions": [{"id": "Angry", "label": "Angry", "loop": false}, {"id": "Blush", "label": "Blush", "loop": false}, {"id": "Clapping", "label": "Clapping", "loop": false}, {"id": "Goodbye", "label": "Goodbye", "loop": false}, {"id": "Jump", "label": "Jump", "loop": false}, {"id": "LookAround", "label": "Look around", "loop": true}, {"id": "Relax", "label": "Relax", "loop": true}, {"id": "Sad", "label": "Downcast", "loop": false}, {"id": "Sleepy", "label": "Sleepy", "loop": true}, {"id": "Surprised", "label": "Surprised", "loop": false}, {"id": "Thinking", "label": "Thinking", "loop": true}], "emotions": ["excited", "happy", "greeting", "friendly", "proud", "shy", "calm", "playful", "farewell", "thinking", "sad", "angry", "surprised", "curious"], "idle": ["LookAround", "Thinking", "Relax"], "byEmotion": {"excited": {"id": "Jump", "label": "Jump", "emotion": "excited", "when": "celebration, hype, invitations to play, dancing", "loop": false}, "happy": {"id": "Clapping", "label": "Clapping", "emotion": "happy", "when": "praise, good news, gratitude, affection", "loop": false}, "greeting": {"id": "Clapping", "label": "Clapping", "emotion": "greeting", "when": "hello, introductions, someone arriving", "loop": false}, "friendly": {"id": "Clapping", "label": "Clapping", "emotion": "friendly", "when": "casual small talk, acknowledgement", "loop": false}, "proud": {"id": "Blush", "label": "Blush", "emotion": "proud", "when": "showing off, confidence, compliments about looks", "loop": false}, "shy": {"id": "Blush", "label": "Blush", "emotion": "shy", "when": "flirting, embarrassment, being admired", "loop": false}, "calm": {"id": "Relax", "label": "Relax", "emotion": "calm", "when": "neutral statements, nothing emotive", "loop": true}, "playful": {"id": "Jump", "label": "Jump", "emotion": "playful", "when": "teasing, jokes, banter", "loop": false}, "farewell": {"id": "Goodbye", "label": "Goodbye", "emotion": "farewell", "when": "leaving, saying bye, ending the conversation", "loop": false}, "thinking": {"id": "Thinking", "label": "Thinking", "emotion": "thinking", "when": "questions, problems, anything asking for reasoning", "loop": true}, "sad": {"id": "Sad", "label": "Downcast", "emotion": "sad", "when": "loss, bad news, disappointment", "loop": false}, "angry": {"id": "Angry", "label": "Angry", "emotion": "angry", "when": "insults, hostility, frustration", "loop": false}, "surprised": {"id": "Surprised", "label": "Surprised", "emotion": "surprised", "when": "shock, disbelief, sudden news", "loop": false}, "curious": {"id": "LookAround", "label": "Look around", "emotion": "curious", "when": "wondering aloud, mild interest", "loop": true}}, "maxSay": 240, "models": [{"id": "jev-latest", "label": "jev-latest"}, {"id": "jev-preview", "label": "jev-preview"}]};</script>
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -238,6 +246,11 @@ function openKeyDialog(msg){
       <h3>TypeSafe API key</h3>
       <p class="kmsg" id="kMsg">This page calls the Jev API directly from your browser.
          Your key is stored in this browser's localStorage and is never sent anywhere else.</p>
+      <p class="kmsg">GitHub Pages hosts only the 3D stage. TypeSafe currently blocks
+         browser API requests via CORS; a key alone does not fix that. Use the motion
+         preview without a key, or configure your own trusted proxy as described in the
+         <a href="https://github.com/GY19A/jev-stage#the-cors-caveat--read-this-before-you-file-an-issue"
+         target="_blank" rel="noopener">README</a>. No AI results are simulated.</p>
       <input id="kInp" type="password" placeholder="apikey_..." autocomplete="off" spellcheck="false">
       <div class="krow">
         <button id="kSave">Save &amp; continue</button>
@@ -287,6 +300,9 @@ async function boot_(){
     `<option value="${esc(a.id)}">${esc(a.label)} · ${esc(a.note)}</option>`).join('');
   el('model').innerHTML = STAGE_META.models.map(m=>
     `<option value="${esc(m.id)}">${esc(m.label)}</option>`).join('');
+  el('motionPreview').innerHTML = '<option value="">Preview motion · no AI</option>' +
+    META.motions.map(m=>`<option value="${esc(m.id)}">${esc(m.label)}</option>`).join('');
+  el('motionPreview').onchange = previewMotion;
   el('chips').innerHTML = SEEDS.map(s=>`<span class="chip">${esc(s)}</span>`).join('');
   document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
     el('inp').value=c.textContent; send(); });
@@ -374,7 +390,7 @@ function initGL(){
        renderer.setSize(w,h,false); if(composer) composer.setSize(w,h);
        camera.aspect=w/h; camera.updateProjectionMatrix();
      }};
-  updateKeyBadge(); if(!getKey()) openKeyDialog();
+  updateKeyBadge();
   S.resize(); addEventListener('resize',()=>S&&S.resize());
   window.__S=S;
 
@@ -516,6 +532,25 @@ async function send(){
   }catch(err){ el('hConf').textContent=err.message; }
   busy=false; el('go').disabled=false;
   if(!idleT) idleT=setTimeout(()=>{ if(!busy) playIdle(); }, 6000);
+}
+async function previewMotion(){
+  const picker=el('motionPreview');
+  const motion=META.motions.find(m=>m.id===picker.value);
+  if(!motion || busy || loading) return;
+  busy=true; clearTimeout(idleT); idleT=null;
+  picker.disabled=true; el('go').disabled=true; el('avatar').disabled=true;
+  try{
+    const c=await play(motion.id, !!motion.loop, false);
+    el('hEmo').textContent='preview';
+    el('hConf').textContent=c?'manual motion · no AI inference':'motion failed to load';
+    el('hLat').textContent='';
+    el('say').textContent='Motion preview: '+motion.label+' — selected by you, not a model.';
+    el('say').classList.add('on');
+  }finally{
+    busy=false; picker.disabled=false; el('go').disabled=false; el('avatar').disabled=false;
+    picker.value='';
+    if(!idleT) idleT=setTimeout(playIdle, 6000);
+  }
 }
 boot();
 </script></body></html>
