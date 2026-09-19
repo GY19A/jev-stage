@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Decision Stage · gateway</title>
+<script type="importmap">{"imports":{
+"three":"https://unpkg.com/three@0.169.0/build/three.module.js",
+"three/addons/":"https://unpkg.com/three@0.169.0/examples/jsm/",
+"@pixiv/three-vrm":"https://unpkg.com/@pixiv/three-vrm@3.4.2/lib/three-vrm.module.js",
+"@pixiv/three-vrm-animation":"https://unpkg.com/@pixiv/three-vrm-animation@3.4.2/lib/three-vrm-animation.module.js"
+}}</script>
+<style>
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:#05060a;color:#e8eef7;overflow:hidden;
+     font:14px/1.6 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif}
+#app{position:fixed;inset:0}
+canvas{display:block;width:100%;height:100%}
+.vig{position:absolute;inset:0;pointer-events:none;
+     background:radial-gradient(ellipse at 50% 42%,transparent 34%,#05060ad9 88%)}
+.top{position:absolute;top:0;left:0;right:0;padding:20px 26px;pointer-events:none;
+     background:linear-gradient(#05060acc,transparent);
+     display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.ttl{min-width:0}
+.brand{font-size:16px;font-weight:650;letter-spacing:-.2px}
+.tag{font-size:12px;color:#8b98ab;margin-top:2px;max-width:520px}
+.hud{text-align:right;font:11.5px ui-monospace,monospace;color:#8b98ab;
+     pointer-events:none;flex:0 0 auto;max-width:44%}
+.hud b{color:#e8eef7}
+.hud .emo{font-size:20px;font-weight:650;letter-spacing:-.4px;color:#7cc4ff;
+          font-family:ui-sans-serif,sans-serif;display:block;margin-bottom:2px}
+.bottom{position:absolute;bottom:0;left:0;right:0;padding:22px 26px 24px;
+        background:linear-gradient(transparent,#05060ae8 42%);pointer-events:none}
+.bottom .row,.bottom .chips{pointer-events:auto}
+.row{display:flex;gap:10px;max-width:720px;margin:0 auto;position:relative;z-index:3}
+input{flex:1;background:#0c1018e6;color:#e8eef7;border:1px solid #1e2836;
+      border-radius:11px;padding:13px 16px;font-size:14px;backdrop-filter:blur(8px)}
+input:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px #3b82f622}
+button{background:#2563eb;color:#fff;border:0;border-radius:11px;padding:13px 24px;
+       font-size:14px;font-weight:600;cursor:pointer;transition:.15s}
+button:hover:not(:disabled){background:#3b82f6}
+button:disabled{opacity:.45;cursor:not-allowed}
+.chips{display:flex;gap:7px;max-width:720px;margin:11px auto 0;flex-wrap:wrap;
+       justify-content:center}
+.chip{font-size:11.5px;color:#93a3b8;background:#0c1018cc;border:1px solid #1e2836;
+      border-radius:20px;padding:5px 12px;cursor:pointer;transition:.15s;
+      backdrop-filter:blur(8px)}
+.chip:hover{border-color:#3b82f6;color:#e8eef7}
+.ctl{position:absolute;bottom:24px;left:26px;display:flex;flex-direction:column;gap:8px;
+     z-index:5;pointer-events:auto}
+.bottom .ctl{position:absolute;bottom:24px;left:26px}
+select{background:#0c1018e6;color:#e8eef7;border:1px solid #1e2836;border-radius:9px;
+       padding:8px 11px;font-size:12px;backdrop-filter:blur(8px)}
+.load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      background:#05060a;z-index:9;transition:opacity .6s}
+.load.gone{opacity:0;pointer-events:none}
+.ring{width:34px;height:34px;border:2px solid #1e2836;border-top-color:#3b82f6;
+      border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.lt{position:absolute;bottom:38%;font-size:12px;color:#5b6879;letter-spacing:.4px}
+.say{position:absolute;bottom:150px;left:50%;transform:translateX(-50%);z-index:2;
+     max-width:660px;font-size:13.5px;color:#c6d2e2;background:#0c1018d9;
+     border:1px solid #1e2836;border-radius:12px;padding:11px 16px;
+     backdrop-filter:blur(10px);opacity:0;transition:opacity .35s}
+.say.on{opacity:1}
+.say b{color:#7cc4ff}
+@media(max-width:760px){
+  /* Beat the desktop `.bottom .ctl` absolute rule with equal specificity. */
+  .bottom .ctl{position:static;bottom:auto;left:auto}
+  /* Stack the header: the HUD used to sit on top of the tagline. */
+  .top{padding:14px 16px 10px;gap:12px}
+  .brand{font-size:14px}
+  .tag{display:none}
+  .hud{flex:0 1 auto;max-width:58%;min-width:0}
+  .hud .emo{font-size:16px;margin-bottom:0}
+  .hud #hConf,.hud #hLat{font-size:10px;line-height:1.35}
+  /* Caption sits above the input stack instead of behind it. */
+  .say{position:static;bottom:auto;left:auto;transform:none;
+       margin:0 0 9px;max-width:none;font-size:12.5px;padding:8px 12px;display:none}
+  .say.on{display:block}
+  .bottom{padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+          background:linear-gradient(transparent,#05060af2 34%)}
+  .row{gap:8px}
+  input{padding:11px 13px;font-size:16px}   /* 16px stops iOS zooming on focus */
+  button{padding:11px 17px;font-size:14px}
+  /* All eight prompts stay reachable: one row that scrolls sideways. */
+  .chips{margin-top:9px;gap:6px;flex-wrap:nowrap;overflow-x:auto;
+         overflow-y:hidden;-webkit-overflow-scrolling:touch;
+         scrollbar-width:none;padding-bottom:2px}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{font-size:11px;padding:5px 11px;flex:0 0 auto;white-space:nowrap}
+  /* The avatar picker was hidden on mobile, so phones could not switch model. */
+  .ctl{position:static;flex-direction:row;gap:8px;margin:0 0 9px;
+       max-width:none;justify-content:flex-start}
+  .ctl select{flex:1;min-width:0;font-size:12px;padding:7px 9px}
+}
+@media(max-width:420px){
+  .brand{font-size:13px}
+  .hud .emo{font-size:15px}
+  .chip{font-size:10.5px;padding:5px 10px}
+}
+
+.keybadge{position:absolute;top:0;right:0;font:11px ui-monospace,monospace;
+  color:#0798FE;background:#0798FE18;border:1px solid #0798FE44;border-radius:999px;
+  padding:3px 10px;cursor:pointer;pointer-events:auto;white-space:nowrap}
+.keybadge.ok{color:#5ad18f;background:#5ad18f14;border-color:#5ad18f3a}
+.keydlg{position:fixed;inset:0;background:#05060ad0;backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.keydlg.on{display:flex}
+.kbox{background:#0c1018;border:1px solid #1e2836;border-radius:14px;
+  padding:22px 24px;max-width:430px;width:100%;box-shadow:0 20px 60px #000a}
+.kbox h3{margin:0 0 8px;font-size:15px;color:#e8edf4}
+.kmsg{margin:0 0 14px;font-size:12.5px;line-height:1.5;color:#8b98ab}
+.kbox input{width:100%;box-sizing:border-box;background:#070a10;border:1px solid #1e2836;
+  border-radius:9px;padding:11px 13px;color:#e8edf4;font:13px ui-monospace,monospace}
+.kbox input:focus{outline:none;border-color:#0798FE88}
+.krow{display:flex;gap:9px;margin-top:13px}
+.kbox button{flex:1;background:#0798FE;border:0;border-radius:9px;padding:10px;
+  color:#04121f;font-size:13px;font-weight:600;cursor:pointer}
+.kbox button.ghost{background:#141b26;color:#8b98ab}
+.khint{margin:13px 0 0;font-size:11.5px;color:#66727f}
+.khint a{color:#0798FE}
+</style></head><body>
+<div id="app">
+  <canvas id="cv"></canvas>
+  <div class="vig"></div>
+  <div class="top">
+    <div class="ttl">
+      <div class="brand">Decision Stage</div>
+      <div class="tag">every movement chosen by one forward pass through a structured decision model</div>
+    </div>
+    <button id="keyBadge" class="keybadge" onclick="openKeyDialog()">set API key</button>
+    <div class="hud">
+      <span class="emo" id="hEmo">—</span>
+      <span id="hConf">awaiting input</span><br>
+      <span id="hLat"></span>
+    </div>
+  </div>
+  <div class="bottom">
+    <div class="say" id="say"></div>
+    <div class="ctl">
+      <select id="avatar"></select>
+      <select id="model"></select>
+    </div>
+    <div class="row">
+      <input id="inp" maxlength="__MAXSAY__" placeholder="Say something to her…" autocomplete="off">
+      <button id="go">Send</button>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+  <div class="load" id="load">
+    <div style="text-align:center">
+      <div class="ring" style="margin:0 auto"></div>
+      <div class="lt" style="position:static;margin-top:16px">preparing the stage</div>
+    </div>
+  </div>
+</div>
+<script>window.STAGE_META = {"avatars": [{"id": "cosmicbot", "label": "CosmicBot", "file": "CosmicBot.vrm", "note": "robot · low-poly", "license": "CC0 · commercial OK"}, {"id": "cyberpal", "label": "Cyberpal", "file": "Cyberpal.vrm", "note": "robot · visor", "license": "CC0 · commercial OK"}, {"id": "sailor", "label": "Sailor girl", "file": "anime_girl.vrm", "note": "VRoid · school uniform", "license": "CC0 · commercial OK"}], "motions": [{"id": "Angry", "label": "Angry", "loop": false}, {"id": "Blush", "label": "Blush", "loop": false}, {"id": "Clapping", "label": "Clapping", "loop": false}, {"id": "Goodbye", "label": "Goodbye", "loop": false}, {"id": "Jump", "label": "Jump", "loop": false}, {"id": "LookAround", "label": "Look around", "loop": true}, {"id": "Relax", "label": "Relax", "loop": true}, {"id": "Sad", "label": "Downcast", "loop": false}, {"id": "Sleepy", "label": "Sleepy", "loop": true}, {"id": "Surprised", "label": "Surprised", "loop": false}, {"id": "Thinking", "label": "Thinking", "loop": true}], "emotions": ["excited", "happy", "greeting", "friendly", "proud", "shy", "calm", "playful", "farewell", "thinking", "sad", "angry", "surprised", "curious"], "idle": ["LookAround", "Thinking", "Relax"], "byEmotion": {"excited": {"id": "Jump", "label": "Jump", "emotion": "excited", "when": "celebration, hype, invitations to play, dancing", "loop": false}, "happy": {"id": "Clapping", "label": "Clapping", "emotion": "happy", "when": "praise, good news, gratitude, affection", "loop": false}, "greeting": {"id": "Clapping", "label": "Clapping", "emotion": "greeting", "when": "hello, introductions, someone arriving", "loop": false}, "friendly": {"id": "Clapping", "label": "Clapping", "emotion": "friendly", "when": "casual small talk, acknowledgement", "loop": false}, "proud": {"id": "Blush", "label": "Blush", "emotion": "proud", "when": "showing off, confidence, compliments about looks", "loop": false}, "shy": {"id": "Blush", "label": "Blush", "emotion": "shy", "when": "flirting, embarrassment, being admired", "loop": false}, "calm": {"id": "Relax", "label": "Relax", "emotion": "calm", "when": "neutral statements, nothing emotive", "loop": true}, "playful": {"id": "Jump", "label": "Jump", "emotion": "playful", "when": "teasing, jokes, banter", "loop": false}, "farewell": {"id": "Goodbye", "label": "Goodbye", "emotion": "farewell", "when": "leaving, saying bye, ending the conversation", "loop": false}, "thinking": {"id": "Thinking", "label": "Thinking", "emotion": "thinking", "when": "questions, problems, anything asking for reasoning", "loop": true}, "sad": {"id": "Sad", "label": "Downcast", "emotion": "sad", "when": "loss, bad news, disappointment", "loop": false}, "angry": {"id": "Angry", "label": "Angry", "emotion": "angry", "when": "insults, hostility, frustration", "loop": false}, "surprised": {"id": "Surprised", "label": "Surprised", "emotion": "surprised", "when": "shock, disbelief, sudden news", "loop": false}, "curious": {"id": "LookAround", "label": "Look around", "emotion": "curious", "when": "wondering aloud, mild interest", "loop": true}}, "maxSay": 240, "models": [{"id": "jev-latest", "label": "jev-latest"}, {"id": "jev-preview", "label": "jev-preview"}]};</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
+
+const BASE=".", el=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let META={}, S=null, busy=false, idleT=null, idleI=0, cache={}, lastIdle='';
+
+const SEEDS=["Hello there!","You look amazing today.","I lost my keys again…",
+             "Let's dance!","Can you explain quantum tunnelling?","That's hilarious.",
+             "I have to go now.","Wait, what just happened?"];
+
+window.__stage = {step:'start', err:null};
+
+/* ---------- TypeSafe (Jev) direct client ---------- */
+const TS_URL = "https://api.typesafe.ai/v1/systemone";
+const KEY_ITEM = "glance.typesafe.key";
+const getKey = () => localStorage.getItem(KEY_ITEM) || "";
+const setKey = k => k ? localStorage.setItem(KEY_ITEM, k) : localStorage.removeItem(KEY_ITEM);
+
+function buildQuestions(){
+  const crit = {};
+  for (const e of STAGE_META.emotions){
+    const m = STAGE_META.byEmotion[e];
+    crit[e] = m && m.when ? m.when : e;
+  }
+  return {
+    emotion: {type:"choice",
+      instructions:"Which single performance class best fits this message?",
+      criteria: crit},
+    energy: {type:"choice",
+      instructions:"How energetic should the performance be?",
+      criteria:{gentle:"soft, subdued, low-key",
+                moderate:"normal, conversational",
+                high:"big, physical, high energy"}}
+  };
+}
+
+async function askJev(text, model){
+  const key = getKey();
+  if(!key){ openKeyDialog(); throw new Error("no api key"); }
+  const t0 = performance.now();
+  const res = await fetch(TS_URL, {
+    method:"POST",
+    headers:{"content-type":"application/json","authorization":"Bearer "+key},
+    body: JSON.stringify({model: model||"jev-latest", state: text,
+                          questions: buildQuestions()})
+  });
+  const ms = performance.now() - t0;
+  if(res.status===401 || res.status===403){
+    openKeyDialog("That key was rejected. Check it and try again.");
+    throw new Error("unauthorized");
+  }
+  if(!res.ok){
+    let d=""; try{ d=(await res.json()).detail||""; }catch(e){}
+    throw new Error(d || ("HTTP "+res.status));
+  }
+  const j = await res.json();
+  const u = j.usage||{};
+  const emo = j.answers && j.answers.emotion && j.answers.emotion.choice;
+  const motion = (STAGE_META.byEmotion && STAGE_META.byEmotion[emo])
+               || {id:'Relax', label:'Relax', loop:true};
+  return {answers:j.answers, ms, motion,
+          decisions:Object.keys(j.answers||{}).length,
+          tokens:{prompt:u.input_tokens||0, completion:u.output_tokens||0}};
+}
+
+/* ---------- key dialog ---------- */
+function openKeyDialog(msg){
+  let d = document.getElementById('keyDlg');
+  if(!d){
+    d = document.createElement('div'); d.id='keyDlg'; d.className='keydlg';
+    d.innerHTML = `<div class="kbox">
+      <h3>TypeSafe API key</h3>
+      <p class="kmsg" id="kMsg">This page calls the Jev API directly from your browser.
+         Your key is stored in this browser's localStorage and is never sent anywhere else.</p>
+      <input id="kInp" type="password" placeholder="apikey_..." autocomplete="off" spellcheck="false">
+      <div class="krow">
+        <button id="kSave">Save &amp; continue</button>
+        <button id="kClear" class="ghost">Forget key</button>
+      </div>
+      <p class="khint">Get a key at <a href="https://console.typesafe.ai/keys" target="_blank"
+         rel="noopener">console.typesafe.ai/keys</a></p></div>`;
+    document.body.appendChild(d);
+    d.addEventListener('click', e=>{ if(e.target===d) d.classList.remove('on'); });
+    d.querySelector('#kSave').onclick = ()=>{
+      const v=d.querySelector('#kInp').value.trim();
+      if(v){ setKey(v); d.classList.remove('on'); updateKeyBadge(); }
+    };
+    d.querySelector('#kClear').onclick = ()=>{
+      setKey(""); d.querySelector('#kInp').value=""; updateKeyBadge();
+    };
+    d.querySelector('#kInp').addEventListener('keydown', e=>{
+      if(e.key==='Enter') d.querySelector('#kSave').click();
+    });
+  }
+  if(msg) d.querySelector('#kMsg').textContent = msg;
+  d.querySelector('#kInp').value = getKey();
+  d.classList.add('on');
+  setTimeout(()=>d.querySelector('#kInp').focus(), 50);
+}
+function updateKeyBadge(){
+  const b=document.getElementById('keyBadge'); if(!b) return;
+  const k=getKey();
+  b.textContent = k ? "key \u2713" : "set API key";
+  b.className = "keybadge" + (k ? " ok" : "");
+}
+
+window.openKeyDialog=openKeyDialog; window.updateKeyBadge=updateKeyBadge;
+async function boot(){
+  try{ await boot_(); }
+  catch(e){
+    window.__stage.err = String(e && (e.stack||e.message) || e);
+    el('load').innerHTML = '<div style="color:#f0883e;padding:20px;max-width:700px;'+
+      'font:12px ui-monospace,monospace">stage failed at '+window.__stage.step+
+      '<br><br>'+esc(window.__stage.err).slice(0,600)+'</div>';
+  }
+}
+async function boot_(){
+  window.__stage.step='fetch-meta';
+  META = STAGE_META;
+  el('avatar').innerHTML = META.avatars.map(a=>
+    `<option value="${esc(a.id)}">${esc(a.label)} · ${esc(a.note)}</option>`).join('');
+  el('model').innerHTML = STAGE_META.models.map(m=>
+    `<option value="${esc(m.id)}">${esc(m.label)}</option>`).join('');
+  el('chips').innerHTML = SEEDS.map(s=>`<span class="chip">${esc(s)}</span>`).join('');
+  document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+    el('inp').value=c.textContent; send(); });
+  el('go').onclick=send;
+  el('inp').onkeydown=e=>{ if(e.key==='Enter') send(); };
+  el('avatar').onchange=()=>load(el('avatar').value);
+  window.__stage.step='initGL';
+  initGL();
+  window.__stage.step='loadAvatar';
+  await load(META.avatars[0].id);
+  window.__stage.step='done';
+  el('load').classList.add('gone');
+}
+
+function initGL(){
+  const canvas=el('cv');
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.12;
+  renderer.outputColorSpace=THREE.SRGBColorSpace;
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+
+  const scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x05060a);
+  scene.fog=new THREE.Fog(0x05060a, 4.5, 11);
+
+  const pmrem=new THREE.PMREMGenerator(renderer);
+  scene.environment=pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environmentIntensity=0.48;
+
+  const camera=new THREE.PerspectiveCamera(31, 1, 0.1, 60);
+
+  // MToon (VRM) materials are already flat-shaded, so they blow out fast.
+  // One modest key + a soft fill + a rim is enough; stacking lights bleaches
+  // skin and light fabric while the blacks stay put.
+  const key=new THREE.DirectionalLight(0xfff6ec, 1.55);
+  key.position.set(2.0,3.0,3.4); key.castShadow=true;
+  key.shadow.mapSize.set(2048,2048); key.shadow.bias=-0.0006;
+  key.shadow.camera.near=0.5; key.shadow.camera.far=14;
+  key.shadow.camera.left=-3; key.shadow.camera.right=3;
+  key.shadow.camera.top=4; key.shadow.camera.bottom=-1;
+  scene.add(key);
+  const fill=new THREE.DirectionalLight(0x9fc0ff, 0.42);
+  fill.position.set(-3.0,1.7,2.6); scene.add(fill);
+  const rim=new THREE.DirectionalLight(0x7cc4ff, 1.15);
+  rim.position.set(-1.6,2.3,-3.4); scene.add(rim);
+  scene.add(new THREE.AmbientLight(0x5a6478, 0.80));
+
+  // floor: dark, slightly reflective, catches the shadow
+  const floor=new THREE.Mesh(
+    new THREE.CircleGeometry(7,64),
+    new THREE.MeshStandardMaterial({color:0x090c12,roughness:.42,metalness:.65}));
+  floor.rotation.x=-Math.PI/2; floor.receiveShadow=true; scene.add(floor);
+  const ring=new THREE.Mesh(
+    new THREE.RingGeometry(1.35,1.42,96),
+    new THREE.MeshBasicMaterial({color:0x2563eb,transparent:true,opacity:.30,
+                                 side:THREE.DoubleSide}));
+  ring.rotation.x=-Math.PI/2; ring.position.y=0.002; scene.add(ring);
+  const grid=new THREE.GridHelper(16,32,0x1b3a63,0x0e1622);
+  grid.material.transparent=true; grid.material.opacity=.32;
+  grid.position.y=0.001; scene.add(grid);
+
+  // Post-processing is skipped when the GPU is a software rasteriser
+  // (headless CI, SwiftShader): the bloom pass renders black there.
+  const soft = /swiftshader|llvmpipe|software/i.test((()=>{
+    const gl=renderer.getContext();
+    const d=gl.getExtension('WEBGL_debug_renderer_info');
+    return d?String(gl.getParameter(d.UNMASKED_RENDERER_WEBGL)):'';
+  })()) || new URLSearchParams(location.search).has('nopost');
+  let composer=null;
+  if(!soft){
+    composer=new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene,camera));
+    composer.addPass(new UnrealBloomPass(new THREE.Vector2(1,1), 0.18, 0.7, 0.95));
+    composer.addPass(new OutputPass());
+  }
+
+  const clock=new THREE.Clock();
+  S={renderer,scene,camera,composer,clock,ring,vrm:null,mixer:null,action:null,
+     target:new THREE.Vector3(0,1,0), camGoal:new THREE.Vector3(0,1,3),
+     resize(){
+       const w=innerWidth,h=innerHeight;
+       renderer.setSize(w,h,false); if(composer) composer.setSize(w,h);
+       camera.aspect=w/h; camera.updateProjectionMatrix();
+     }};
+  updateKeyBadge(); if(!getKey()) openKeyDialog();
+  S.resize(); addEventListener('resize',()=>S&&S.resize());
+  window.__S=S;
+
+  let t=0; window.__frames=0;
+  (function loop(){
+    window.__frames++;
+    requestAnimationFrame(loop);
+    const dt=clock.getDelta(); t+=dt;
+    if(S.mixer) S.mixer.update(dt);
+    if(S.vrm) S.vrm.update(dt);
+    // slow breathing camera drift — keeps the frame alive
+    camera.position.x += ((S.camGoal.x + Math.sin(t*0.22)*0.13) - camera.position.x)*0.035;
+    camera.position.y += ((S.camGoal.y + Math.sin(t*0.31)*0.045) - camera.position.y)*0.035;
+    camera.position.z += (S.camGoal.z - camera.position.z)*0.035;
+    camera.lookAt(S.target);
+    S.ring.material.opacity = 0.22 + Math.sin(t*1.5)*0.09;
+    if(composer) composer.render(); else renderer.render(scene,camera);
+  })();
+}
+
+function loader(){
+  const l=new GLTFLoader();
+  l.register(p=>new VRMLoaderPlugin(p));
+  l.register(p=>new VRMAnimationLoaderPlugin(p));
+  return l;
+}
+
+let loading=false;
+async function load(id){
+  if(loading) return;
+  loading=true;
+  const sel=el('avatar'); if(sel) sel.disabled=true;
+  try{ await load_(id); }
+  catch(e){ const h=el('hConf'); if(h) h.textContent='avatar failed to load'; }
+  finally{ loading=false; if(sel) sel.disabled=false; }
+}
+
+async function load_(id){
+  const meta=META.avatars.find(a=>a.id===id)||META.avatars[0];
+  clearTimeout(idleT); idleT=null;
+  if(S.vrm){ S.scene.remove(S.vrm.scene); VRMUtils.deepDispose(S.vrm.scene); }
+  S.mixer=null; S.action=null; cache={};
+  const hud2=el('hConf');
+  if(hud2) hud2.textContent='loading '+meta.label+' …';
+  // Cloudflare strips content-length on compressed transfers, so ev.total is
+  // often 0 — fall back to showing megabytes received.
+  const gltf=await loader().loadAsync(BASE+'/static/vrm/'+meta.file, e=>{
+    if(!hud2) return;
+    hud2.textContent = e.total
+      ? 'loading '+meta.label+' · '+Math.round(e.loaded/e.total*100)+'%'
+      : 'loading '+meta.label+' · '+(e.loaded/1048576).toFixed(1)+' MB';
+  });
+  const vrm=gltf.userData.vrm;
+  VRMUtils.removeUnnecessaryVertices(gltf.scene);
+  VRMUtils.combineSkeletons(gltf.scene);
+  vrm.scene.traverse(o=>{ o.frustumCulled=false;
+    if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; } });
+  if(vrm.lookAt) vrm.lookAt.target=S.camera;
+  // VRM 0.x faces +Z, VRM 1.0 faces -Z: only the old spec needs flipping.
+  const isV0 = !!(vrm.meta && (vrm.meta.metaVersion === '0' ||
+                               vrm.meta.metaVersion === 0 ||
+                               vrm.meta.exporterVersion === undefined &&
+                               vrm.meta.title !== undefined && vrm.meta.name === undefined));
+  vrm.scene.rotation.y = isV0 ? Math.PI : 0;
+  S.scene.add(vrm.scene); S.vrm=vrm;
+  S.mixer=new THREE.AnimationMixer(vrm.scene);
+  frame(vrm);
+  const hud3=el('hConf'); if(hud3) hud3.textContent='awaiting input';
+  idleI=0; playIdle();
+}
+
+function frame(vrm){
+  const box=new THREE.Box3().setFromObject(vrm.scene);
+  const h=Math.max(0.5, box.getSize(new THREE.Vector3()).y);
+  const fov=S.camera.fov*Math.PI/180;
+  const dist=(h*1.08)/(2*Math.tan(fov/2));
+  S.camGoal.set(0, box.min.y+h*0.66, dist);
+  S.target.set(0, box.min.y+h*0.60, 0);
+  S.camera.position.copy(S.camGoal);
+}
+
+async function clip(name){
+  if(cache[name]) return cache[name];
+  const g=await loader().loadAsync(BASE+'/static/vrma/'+name+'.vrma');
+  const va=g.userData.vrmAnimations&&g.userData.vrmAnimations[0];
+  if(!va) throw new Error('no animation');
+  return (cache[name]=createVRMAnimationClip(va,S.vrm));
+}
+
+async function play(name, loop, isIdle){
+  if(!S||!S.vrm) return null;
+  let c; try{ c=await clip(name); }catch(e){ return null; }
+  const a=S.mixer.clipAction(c);
+  a.reset();
+  a.setLoop(loop?THREE.LoopRepeat:THREE.LoopOnce, loop?Infinity:1);
+  a.clampWhenFinished=!loop;
+  if(S.action&&S.action!==a) a.crossFadeFrom(S.action, 0.55, false);
+  a.play(); S.action=a;
+  if(!isIdle){
+    clearTimeout(idleT);
+    const hold=loop?6500:Math.max(2000,c.duration*1000+600);
+    idleT=setTimeout(()=>{ if(!busy) playIdle(); }, hold);
+  }
+  return c;
+}
+
+async function playIdle(){
+  if(busy) return;
+  const pool=(META.idle||[]).filter(n=>n!==lastIdle);
+  const name=pool.length?pool[idleI%pool.length]:(META.idle||['motion_pose'])[0];
+  idleI++; lastIdle=name;
+  const c=await play(name,true,true);
+  if(busy) return;
+  clearTimeout(idleT);
+  idleT=setTimeout(()=>{ if(!busy) playIdle(); },
+                   Math.max(5000,(c?c.duration:4)*1600));
+}
+
+async function send(){
+  const inp=el('inp'), text=(inp.value||'').trim();
+  if(!text||busy) return;
+  busy=true; clearTimeout(idleT); idleT=null;
+  el('go').disabled=true;
+  el('hConf').textContent='deciding…';
+  try{
+    const j=await askJev(text, el('model').value);
+    const e=j.answers.emotion, en=j.answers.energy;
+    el('hEmo').textContent=e.choice;
+    el('hConf').innerHTML=`confidence <b>${(e.confidence*100).toFixed(0)}%</b> · `+
+                          `energy <b>${esc(en?en.choice:'—')}</b>`;
+    el('hLat').innerHTML=`<b>${j.ms.toFixed(0)}</b> ms · ${j.decisions} decisions · `+
+                         `${(j.tokens&&j.tokens.prompt)||0} tok`;
+    const s=el('say');
+    s.innerHTML=`<b>you</b> ${esc(text)} &nbsp;·&nbsp; `+
+                `<span style="color:#8b98ab">chose ${esc(e.choice)} → ${esc((j.motion&&j.motion.label)||'—')}</span>`;
+    s.classList.add('on');
+    await play(j.motion.id, !!j.motion.loop, false);
+    inp.value='';
+  }catch(err){ el('hConf').textContent=err.message; }
+  busy=false; el('go').disabled=false;
+  if(!idleT) idleT=setTimeout(()=>{ if(!busy) playIdle(); }, 6000);
+}
+boot();
+</script></body></html>

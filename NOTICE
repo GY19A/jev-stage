@@ -1,0 +1,103 @@
+Glance — third-party asset notices
+==================================
+
+The source code in this repository is MIT licensed (see LICENSE). The bundled
+3D assets are NOT covered by that license and retain their own terms, recorded
+below. Provenance for every avatar was verified by SHA-256 comparison against
+the upstream download URL.
+
+------------------------------------------------------------------------------
+AVATARS (static/vrm/) — all CC0 1.0 Universal
+------------------------------------------------------------------------------
+
+CosmicBot.vrm — "Cosmic Bot"
+  Source:  ToxSam/open-source-avatars, 100Avatars Round 3 (Avatar 237)
+           https://github.com/ToxSam/open-source-avatars
+  License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
+  Embedded metadata: licenseName "CC0", allowRedistribution true,
+                     modification ALLOW, creditNotation UNNECESSARY
+
+Cyberpal.vrm — "Cyberpal"
+  Source:  ToxSam/open-source-avatars, 100Avatars Round 3 (Avatar 208)
+  License: CC0 1.0
+  Embedded metadata: licenseName "CC0", allowRedistribution true,
+                     modification ALLOW, creditNotation UNNECESSARY
+
+anime_girl.vrm — "おんなのこ１ロング" (girl 1, long hair)
+  Source:  VRoid Studio legacy base model, pixiv Inc.
+  License: CC0 1.0
+  Note:    pixiv's official VRoid terms place the base models and
+           beta AvatarSample_1-4 under CC0 with an explicit copyright
+           waiver. (AvatarSample_A/B/C are NOT CC0 and are not used here.)
+
+polydancer.vrm — "Polydancer"
+  Source:  Polygonal Mind, via 100Avatars Round 1 (Avatar 021)
+           https://www.polygonalmind.com/
+  License: CC0 1.0
+
+rose.vrm — "Rose"
+  Source:  Polygonal Mind, via 100Avatars Round 1 (Avatar 057)
+  License: CC0 1.0
+
+CC0 imposes no attribution requirement. Credit is given here voluntarily.
+
+------------------------------------------------------------------------------
+ANIMATIONS (static/vrma/) — MIT, with a documented ambiguity
+------------------------------------------------------------------------------
+
+Angry.vrma, Blush.vrma, Clapping.vrma, Goodbye.vrma, Jump.vrma,
+LookAround.vrma, Relax.vrma, Sad.vrma, Sleepy.vrma, Surprised.vrma,
+Thinking.vrma
+
+  Source:  tk256ailab/vrm-viewer
+           https://github.com/tk256ailab/vrm-viewer
+  License: MIT License, Copyright (c) 2025 TK256
+
+  AMBIGUITY, DISCLOSED: the upstream repository ships an MIT LICENSE file with
+  no carve-out, but its README states "This project is for demonstration
+  purposes. Please ensure you have appropriate rights for any VRM models and
+  animations you use." The repository's code is 100% HTML, which suggests the
+  MIT grant is aimed at the viewer rather than the bundled animation files.
+  The .vrma files themselves carry no embedded license metadata and name no
+  original author.
+
+  These clips are included on the basis of the repository's LICENSE file. If
+  you intend to redistribute them commercially, confirm the scope with the
+  upstream maintainer or substitute motion data you control.
+
+------------------------------------------------------------------------------
+ASSETS DELIBERATELY EXCLUDED FROM THIS REPOSITORY
+------------------------------------------------------------------------------
+
+The following were evaluated and REMOVED before publication. They are recorded
+here so the decision is auditable and is not silently reversed later.
+
+Velara.vrm, Onyx.vrm, Dhahlia.vrm
+  Author:  Nitral / Nitral Studios (2024), VRM 1.0
+  Reason:  embedded metadata sets allowRedistribution = false and
+           modification = "prohibited". The same metadata sets
+           commercialUsage = "corporation", but commercial-use rights and
+           redistribution rights are independent permission bits; the former
+           does not grant the latter. The upstream repository has no LICENSE
+           file, so no repo-level grant overrides the embedded prohibition.
+
+greeting.vrma, greeting2.vrma, hello.vrma, model_pose.vrma, motion_pose.vrma,
+peace_sign.vrma, shoot.vrma, show_full_body.vrma, spin.vrma
+  Source:  test157t/VRM-Assets-Pack-For-Silly-Tavern (no LICENSE file),
+           animations originating from Adobe Mixamo per that repo's README
+  Reason:  Adobe's Mixamo terms permit unlimited commercial use but prohibit
+           "any type of free distribution of character or animation raw
+           files." Bundling them in a public repository is the prohibited
+           act; format conversion does not change this.
+
+------------------------------------------------------------------------------
+RUNTIME DEPENDENCIES (loaded from CDN, not bundled)
+------------------------------------------------------------------------------
+
+three.js            MIT     https://threejs.org/
+@pixiv/three-vrm    MIT     https://github.com/pixiv/three-vrm
+
+------------------------------------------------------------------------------
+
+This file records stated license terms as found at the sources named above.
+It is a factual summary, not legal advice.
