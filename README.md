@@ -1,4 +1,4 @@
-# Glance
+# Jev Stage
 
 **A 3D avatar that reacts in one forward pass — no text generation, no JSON parsing.**
 
@@ -10,9 +10,11 @@ There is no chatbot here. Nothing generates a sentence and nothing parses one. T
 returns a `choice` and a confidence number, and the page branches on it the way ordinary
 code branches on an enum.
 
-![Glance](docs/hero.png)
+![Jev Stage](docs/demo.gif)
 
-https://github.com/user-attachments/assets/demo.mp4
+*Every movement above was chosen by a single forward pass. The HUD shows the class, the confidence, and the round-trip time as it happens.*
+
+<sub>Full-resolution captures: [desktop](docs/demo.mp4) · [mobile](docs/demo-mobile.mp4)</sub>
 
 ---
 
@@ -51,15 +53,15 @@ you watch it happen in real time, on a character that visibly responds.
 It is one HTML file. There is no build step, no bundler, and no backend.
 
 ```bash
-git clone https://github.com/GY19A/glance.git
-cd glance
+git clone https://github.com/GY19A/jev-stage.git
+cd jev-stage
 python3 -m http.server 8080
 ```
 
 Open `http://localhost:8080`, click **set API key**, paste a
 [TypeSafe key](https://console.typesafe.ai/keys), and start typing.
 
-The key is kept in `localStorage` under `glance.typesafe.key`. It never leaves your
+The key is kept in `localStorage` under `jev-stage.typesafe.key`. It never leaves your
 browser except as an `Authorization` header on the API call.
 
 ### The CORS caveat — read this before you file an issue
